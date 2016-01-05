@@ -1,0 +1,15 @@
+{
+  "name": "SmartHomeWeb",
+  "version": "1.0.0",
+  "description": "Providing web interface to PLC",
+  "main": "server/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Alexander Pivovarov",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.13.3",
+    "socket.io": "^1.3.6"
+  }
+}

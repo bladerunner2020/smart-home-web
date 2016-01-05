@@ -1,0 +1,41 @@
+.main{
+    padding-top: 30px;
+}
+.panel-heading{
+    position: relative;
+    cursor: pointer;
+}
+.panel-heading h2{
+    margin: 0px 0px;
+    font-size: 24px;
+}
+.panel-heading .icon{
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    font-size: 24px;
+    margin-top: -12px;
+}
+.list-group-item{
+    position: relative;
+    cursor: pointer;
+}
+.list-group-item .icon{
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    font-size: 18px;
+    margin-top: -9px;
+}
+.main button{
+    margin-bottom: 15px;
+}
+
+.panel-warning>.panel-heading {
+    color: #fff;
+    background-color: #FAD511;
+    border-color: #FAD511;
+}
+.selected .icon{
+    color: rgb(255, 184, 0);
+}
