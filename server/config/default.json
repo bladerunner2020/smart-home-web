@@ -1,0 +1,17 @@
+{
+  // Customer module configs
+  "General": {
+    "port": 8000
+  },
+  "Modbus" :{
+    "host" : "localhost",
+    "port" : "502"
+  },
+  "ZWave" : {
+    "host": "localhost",
+    "port": "8083",
+    "user": "",
+    "pass": "",
+    "device_path": "/ZWaveAPI/Run/"
+  }
+}

@@ -1,12 +1,26 @@
 /**
  * Created by bladerunner on 18.08.2015.
  */
-var modbus = require('../jsmodbus/jsModbus');
+var modbus = require('jsModbus');
 var util = require('util');
 var misc = require('../misc/mytools');
 var lastresp = null;
-
 var http = require('http');
+var argv = require('optimist').argv;
+var config = require('config');
+
+var z_user = config.get('ZWave.user');
+var z_pass = config.get('ZWave.pass');
+var z_host = config.get('ZWave.host');
+var z_port = config.get('ZWave.port');
+var z_device_path = config.get('ZWave.device_path');
+
+var z_cmd_base = "http://" + z_user + ":" + z_pass +"@" + z_host + ":" +z_port + z_device_path;
+misc.LogMessage('z-wave command base: ' + z_cmd_base);
+
+var modbus_host = config.get('Modbus.host');
+var modbus_port = config.get('Modbus.port');
+misc.LogMessage('Modbus host: ' + modbus_host + ':' + modbus_port);
 
 const SYNC_NONE = 0;
 const SYNC_MODBUS = 2;
@@ -38,19 +52,19 @@ var mb_vars = {
 
 toggleLamp = function(vars, var_num)
 {
-    var url;
+    var url = z_cmd_base;
     switch (var_num){
         case 'var3':
-            url = "http://admin:qwerty15$@192.168.2.107:8083/ZWaveAPI/Run/devices[5].Basic";
+            url += "devices[5].Basic";
             break;
         case 'var2':
-            url = "http://admin:qwerty15$@192.168.2.107:8083/ZWaveAPI/Run/devices[6].Basic";
+            url += "devices[6].Basic";
             break;
         case 'var5':
-            url = "http://admin:qwerty15$@192.168.2.107:8083/ZWaveAPI/Run/devices[7].Basic";
+            url += "devices[7].Basic";
             break;
         case 'var13':
-            url = "http://admin:qwerty15$@192.168.2.107:8083/ZWaveAPI/Run/devices[8].Basic";
+            url += "devices[8].Basic";
             break;
         default :
             // Не z-wave или не подключена
@@ -62,30 +76,31 @@ toggleLamp = function(vars, var_num)
     } else {
         url = url + ".Set(1)";
     }
-    console.log('Toggle z-wave ' + url);
+    misc.LogMessage('Toggle z-wave ' + url);
     http.get(url, function (res) {
-            console.log("Got response: " + res.statusCode);
+        misc.LogMessage("Got response: " + res.statusCode);
         }).on('error', function(err){
-        console.log('http error: ' + err);
+        misc.LogMessage('http error: ' + err);
     }).end();
 };
 
 exports.readSensors = function(){
-    var url = "http://admin:qwerty15$@192.168.2.107:8083/ZWaveAPI/Run/devices[4].SensorBinary.data[1].level.value";
+    var url = z_cmd_base;
+    url += "devices[4].SensorBinary.data[1].level.value";
 
     http.get(url, function(res) {
-        console.log("Got response: " + res.statusCode);
+        misc.LogMessage("Got response: " + res.statusCode);
         res.on('data', function (chunk) {
-            console.log('BODY: ' + chunk);
+            misc.LogMessage('BODY: ' + chunk);
             var sensor_res = (String(chunk).toLowerCase() == 'true');
-            console.log('Sensor: ' + sensor_res);
-
+            misc.LogMessage('Sensor: ' + sensor_res);
         });
     });
 };
 
 readZwaveActuator = function(vars, sflags, name, id){
-    var url = "http://admin:qwerty15$@192.168.2.107:8083/ZWaveAPI/Run/devices[" + id +
+    var url =z_cmd_base;
+    url += "devices[" + id +
                 "].SwitchBinary.data.level.value";
     http.get(url, function(res) {
         res.on('data', function (chunk) {
@@ -96,7 +111,7 @@ readZwaveActuator = function(vars, sflags, name, id){
             }
         });
     }).on('error', function(err){
-        console.log('http error: ' + err);
+        misc.LogMessage('http error: ' + err);
     }).end();
 };
 
@@ -242,15 +257,15 @@ function toggleCoil(coil){
         });
     });
 }
-
-modbus.setLogger(misc.LogMessage );
+// Для отображения лога из jsModbus
+//modbus.setLogger(misc.LogMessage );
 var client;
 connectModbus();
 
 function connectModbus() {
 // create a modbus client
-    misc.LogMessage('Connecting to modbus');
-    client = modbus.createTCPClient(502, '192.168.2.99');
+    misc.LogMessage('Connecting to modbus ' + modbus_host + ':' + modbus_port);
+    client = modbus.createTCPClient(modbus_port, modbus_host);
         cntr = 0;
         closeClient = function () {
             misc.LogMessage('close modbus client function: ' + cntr);
@@ -259,8 +274,6 @@ function connectModbus() {
                 client.close();
             }
         };
-
-    client.UNIT_ID = 6;
 }
 
 exports.isConnected = function() {
@@ -268,6 +281,6 @@ exports.isConnected = function() {
 };
 
 exports.reconnect = function() {
-    console.log('Reconnection...');
+    misc.LogMessage('Reconnection...');
     connectModbus();
 };

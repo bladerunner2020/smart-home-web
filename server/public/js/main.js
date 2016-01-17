@@ -14,7 +14,7 @@ panelHeading.each(function(i, item){
     if(name){
         vars[name] = $(item);
     }
-})
+});
 
 function setVars(data){
     for(var name in data){

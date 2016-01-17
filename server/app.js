@@ -1,7 +1,9 @@
 process.chdir(__dirname); //  для запуска как сервис
 
+var envs = require('envs');
 var express = require('express');
 var app = express();
+var config = require('config');
 var server = require('http').Server(app);
 var modbusapp = require('../modbus/modbusapp');
 var misc = require('../misc/mytools');
@@ -12,10 +14,15 @@ var log = new EventLogger('Smart Home');
 var WC_timer = 0;
 var valid_vars = ['var3' ,'var2', 'var5', 'var13'];
 
+misc.LogMessage('process.env.NODE_ENV = ' + process.env.NODE_ENV);
+
+var port = config.get('General.port');
+misc.LogMessage('Set port: ' + port);
+
 var not_ok = true;
 try {
     while (not_ok) {
-        server.listen(8000);
+        server.listen(port);
         not_ok = false;
     }
 } catch(err) {
@@ -102,15 +109,6 @@ app.get('/switch', function (req, res) {
     zflags[lamp_str_id] = (sw1 != 1);
 });
 
-/*
-// Похоже этот кусок кода был лишним - лог не вызывается
-app.get('/', function (req, res) {
-    console.log('Set static: ' + __dirname + '/public/index.html');
-    // app.use(express.static('public'));
-    res.sendFile(__dirname + '/public/index.html');
-});
-*/
-
 misc.LogMessage('Start app.js ' + __dirname);
 
 //Переменные контроллера
@@ -129,8 +127,6 @@ var vars = {
     var12: false,    // Коридор
     var13: false    // умная розетка
 };
-
-
 
 // Индикатор переключения
 var flags = {
