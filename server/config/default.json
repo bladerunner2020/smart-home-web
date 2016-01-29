@@ -7,6 +7,10 @@
     "host" : "localhost",
     "port" : "502"
   },
+  "Aquarium": {
+    "on" : "07:00",
+    "off": "23:00"
+  },
   "ZWave" : {
     "host": "localhost",
     "port": "8083",

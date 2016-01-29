@@ -1,40 +1,37 @@
 process.chdir(__dirname); //  для запуска как сервис
 
-var envs = require('envs');
+// TODO: проверть нужность массива flags - заменть его везде на sflags??
+var debug = require('debug')('app');
+var error = debug;
+
 var express = require('express');
 var app = express();
 var config = require('config');
 var server = require('http').Server(app);
 var modbusapp = require('../modbus/modbusapp');
-var misc = require('../misc/mytools');
+// var misc = require('../misc/mytools');
+var schedule = require('node-schedule');
 
 var EventLogger = require('node-windows').EventLogger;
-var log = new EventLogger('Smart Home');
+var log2 = new EventLogger('Smart Home');
 
 var WC_timer = 0;
 var valid_vars = ['var3' ,'var2', 'var5', 'var13'];
 
-misc.LogMessage('process.env.NODE_ENV = ' + process.env.NODE_ENV);
+debug('process.env.NODE_ENV = ' + process.env.NODE_ENV);
+debug('process.env.DEBUG = ' + process.env.DEBUG);
 
 var port = config.get('General.port');
-misc.LogMessage('Set port: ' + port);
+debug('Set port: ' + port);
 
-var not_ok = true;
-try {
-    while (not_ok) {
-        server.listen(port);
-        not_ok = false;
-    }
-} catch(err) {
-    misc.LogMessage(err.message);
-}
+server.listen(port);
 
 app.use(express.static('public'));
 app.get('/json', function (req, res) {
     res.json({
-        'mainroom' :vars['var1'],   // Гостинная
-        'mainroom1' :vars['var2'],  // Гостинная резерв
-        'mainroom2' :vars['var3'],  // Гостинная резерв
+        'mainroom' :vars['var1'],   // Гостиная
+        'mainroom1' :vars['var2'],  // Гостиная резерв
+        'mainroom2' :vars['var3'],  // Гостиная резерв
         'kidroom' :vars['var4'],    // Детская
         'kidroom1' :vars['var5'],   // Детская резерв
         'kidroom2' :vars['var6'],   // Детская резерв
@@ -44,7 +41,7 @@ app.get('/json', function (req, res) {
         'bath' :vars['var10'],      // Ванная
         'boxroom' :vars['var11'],   // Кладовка
         'hall' :vars['var12'],      // Коридор
-        'smartoutlet1' : vars['var13'] // Умная розетка
+        'smartoutlet1' : vars['var13'] // Свет в аквариуме
     });
 });
 
@@ -56,14 +53,15 @@ app.get('/sensors', function (req, res) {
     res.end('That\'s all folks');
 
     var is_on = (String(req.query.on).toLowerCase() == 'true');
-    misc.LogMessage('Sensor WC. Status = ' + is_on);
+    debug('Sensor WC. Status = ' + is_on);
+
     if (!is_on) {
         WC_timer_id = setTimeout(function()
             {
-                misc.LogMessage('Senosr WC. Timeout....');
+                debug('Senosr WC. Timeout....');
                 WC_timer_id = 0;
                 if (vars['var9']) {
-                    misc.LogMessage('...Turning WC light off.');
+                    debug('...Turning WC light off.');
                     vars['var9'] = false;
                     flags['var9'] = true;
                 }
@@ -71,7 +69,7 @@ app.get('/sensors', function (req, res) {
     } else {
         if (!WC_timer_id) { clearTimeout(WC_timer_id); }
         if (!vars['var9']) {
-            misc.LogMessage('...Turning WC light on.');
+            debug('...Turning WC light on.');
             vars['var9'] = true;
             flags['var9'] = true;
         }
@@ -88,19 +86,19 @@ app.get('/switch', function (req, res) {
     var lamp = Number(req.query.lamp);
     var is_on = (String(req.query.on).toLowerCase() == 'true');
     var sw = Number(req.query.sw);
-    misc.LogMessage('Switch. Status = ' + is_on + ' Sw = ' + sw);
+    debug('Switch. Status = ' + is_on + ' Sw = ' + sw);
 
-    misc.LogMessage('Switch. Lamp = ' + lamp);
+    debug('Switch. Lamp = ' + lamp);
     if (isNaN(lamp)) {
-        misc.LogMessage('... Error lamp ID');
+        error('... Error lamp ID');
         return;
     }
     var lamp_str_id = 'var' + lamp;
-    misc.LogMessage('...Switching light for ' + lamp_str_id);
+    debug('...Switching light for ' + lamp_str_id);
 
     if (valid_vars.indexOf(lamp_str_id)== -1)
     {
-        misc.LogMessage('Invalid lamp id: ' + lamp_str_id);
+        error('Invalid lamp id: ' + lamp_str_id);
         return;
     }
 
@@ -109,13 +107,13 @@ app.get('/switch', function (req, res) {
     zflags[lamp_str_id] = (sw1 != 1);
 });
 
-misc.LogMessage('Start app.js ' + __dirname);
+debug('Start app.js ' + __dirname);
 
 //Переменные контроллера
 var vars = {
     var1: false,    // Гостинная
-    var2: false,    // Гостинная резерв
-    var3: false,    // Гостинная резерв
+    var2: false,    // Гостиная резерв
+    var3: false,    // Гостиная резерв
     var4: false,    // Детская
     var5: false,    // Детская резерв
     var6: false,    // Детская резерв
@@ -125,7 +123,7 @@ var vars = {
     var10: false,   // Ванная
     var11: false,   // Кладовка
     var12: false,    // Коридор
-    var13: false    // умная розетка
+    var13: false    // Свет в аквариуме
 };
 
 // Индикатор переключения
@@ -166,7 +164,7 @@ modbusapp.syncronize2(vars, sflags);
 
 var io = require('socket.io')(server);
 io.on('connection', function (socket) {
-    misc.LogMessage('Open connection ');
+    debug('Open connection to a client.');
     socket.emit('vars', vars);
     socket.on('vars', function(data){
         for(var name in data){
@@ -182,6 +180,36 @@ io.on('connection', function (socket) {
         }
     })
 });
+
+var time_on = config.get('Aquarium.on');
+var time_off = config.get('Aquarium.off');
+
+ScheduleJob = function(time_str, cb, arg){
+    var time = toDate(time_str,'h:m');
+    var cron_str = time.getMinutes() + ' ' + time.getHours() + ' * * *';
+
+    debug('Scheduling job. Cron string=' + cron_str + ' arg=' + arg);
+
+    schedule.scheduleJob(cron_str, function(){
+        cb(arg);
+    });
+};
+
+setAquariumLight = function(status){
+   debug('Turn aquarium light ' + status);
+    if (status ^ vars['var13'] ) {  // XOR:  true+false or false+true
+        vars['var13'] = status;
+        sflags['var13'] = modbusapp.SYNC_TIMER;
+    }
+};
+
+debug('Aquarium time on:  ' + time_on);
+debug('Aquarium time off:  '+ time_off);
+
+ScheduleJob(time_on, setAquariumLight, true);
+ScheduleJob(time_off, setAquariumLight, false);
+
+
 
 timerId = setInterval(function() {
     //modbusapp.readActuators(vars, flags, zflags);
@@ -203,6 +231,18 @@ var timerId3 = setInterval(function() {
         modbusapp.reconnect();
     }
 }, 10000); // интервал в миллисекундах
+
+function toDate(dStr,format) {
+    var now = new Date();
+    if (format == "h:m") {
+        now.setHours(dStr.substr(0,dStr.indexOf(":")));
+        now.setMinutes(dStr.substr(dStr.indexOf(":")+1));
+        now.setSeconds(0);
+        return now;
+    }else
+        return "Invalid Format";
+}
+
 
 /*
 var timerId2 = setInterval(function() {

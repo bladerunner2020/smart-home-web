@@ -1,12 +1,16 @@
 /**
  * Created by bladerunner on 18.08.2015.
  */
+var debug = require('debug')('modbusapp');
+var error = debug;
+var log = debug;
+// log.log = console.log.bind(console);
+
 var modbus = require('jsModbus');
 var util = require('util');
-var misc = require('../misc/mytools');
+//var misc = require('../misc/mytools');
 var lastresp = null;
 var http = require('http');
-var argv = require('optimist').argv;
 var config = require('config');
 
 var z_user = config.get('ZWave.user');
@@ -16,21 +20,23 @@ var z_port = config.get('ZWave.port');
 var z_device_path = config.get('ZWave.device_path');
 
 var z_cmd_base = "http://" + z_user + ":" + z_pass +"@" + z_host + ":" +z_port + z_device_path;
-misc.LogMessage('z-wave command base: ' + z_cmd_base);
+log('z-wave command base: ' + z_cmd_base);
 
 var modbus_host = config.get('Modbus.host');
 var modbus_port = config.get('Modbus.port');
-misc.LogMessage('Modbus host: ' + modbus_host + ':' + modbus_port);
+log('Modbus host: ' + modbus_host + ':' + modbus_port);
 
 const SYNC_NONE = 0;
 const SYNC_MODBUS = 2;
 const SYNC_GUI = 3;
 const SYNC_ZWAVE = 4;
+const SYNC_TIMER = 5;
 
 exports.SYNC_NONE = SYNC_NONE;
 exports.SYNC_MODBUS = SYNC_MODBUS;
 exports.SYNC_GUI = SYNC_GUI;
 exports.SYNC_ZWAVE = SYNC_ZWAVE;
+exports.SYNC_TIMER = SYNC_TIMER;
 
 //Переменные контроллера
 var mb_vars = {
@@ -76,11 +82,11 @@ toggleLamp = function(vars, var_num)
     } else {
         url = url + ".Set(1)";
     }
-    misc.LogMessage('Toggle z-wave ' + url);
+    debug('Toggle z-wave ' + url);
     http.get(url, function (res) {
-        misc.LogMessage("Got response: " + res.statusCode);
+        debug("Got response: " + res.statusCode);
         }).on('error', function(err){
-        misc.LogMessage('http error: ' + err);
+        error('http error: ' + err);
     }).end();
 };
 
@@ -89,11 +95,11 @@ exports.readSensors = function(){
     url += "devices[4].SensorBinary.data[1].level.value";
 
     http.get(url, function(res) {
-        misc.LogMessage("Got response: " + res.statusCode);
+        debgu("Got response: " + res.statusCode);
         res.on('data', function (chunk) {
-            misc.LogMessage('BODY: ' + chunk);
+            debgu('BODY: ' + chunk);
             var sensor_res = (String(chunk).toLowerCase() == 'true');
-            misc.LogMessage('Sensor: ' + sensor_res);
+            debug('Sensor: ' + sensor_res);
         });
     });
 };
@@ -111,7 +117,7 @@ readZwaveActuator = function(vars, sflags, name, id){
             }
         });
     }).on('error', function(err){
-        misc.LogMessage('http error: ' + err);
+        error('http error: ' + err);
     }).end();
 };
 
@@ -125,7 +131,7 @@ read_modbus_element =function(sflags, name, coil){
     if (mb_vars[name] != coil){
         mb_vars[name] = coil;
         if (sflags[name] == SYNC_NONE) {
-            misc.LogMessage(' ==> Set Sync Modbus');
+            debug(' ==> Set Sync Modbus');
             sflags[name] = SYNC_MODBUS;
         }
     }
@@ -135,7 +141,7 @@ read_modbus = function(sflags){
     // Читаем значения из контроллера
     client.readCoils (0, 8, function (resp, err) {
         if (err) {
-            misc.LogMessage("Ошибка чтения coils: " + err);
+            eror("Ошибка чтения coils: " + err);
             closeClient();
             return;
         }
@@ -153,7 +159,7 @@ read_modbus = function(sflags){
 
     client.readCoils (16, 8, function (resp, err) {
         if (err) {
-            misc.LogMessage("Ошибка чтения coils (2): " + err);
+            error("Ошибка чтения coils (2): " + err);
             closeClient();
             return;
         }
@@ -172,28 +178,35 @@ sync_element = function(vars, sflags, element, coil){
         case SYNC_NONE:
             break;
         case SYNC_MODBUS:                   // Данные изменились в ПЛК
-            misc.LogMessage('SYNC_MODBUS');
+            debug('SYNC_MODBUS');
             vars[element] = mb_vars[element];// Обновляем GUI
             toggleLamp(vars, element);      // Записываем значение в Z-Wave актуатор
             sflags[element] = SYNC_NONE;    // Сбрасываем флаг
-            misc.LogMessage('SYNC_MODBUS - end');
+            debug('SYNC_MODBUS - end');
             break;
         case SYNC_GUI:                      // Данные изменились в GUI
-            misc.LogMessage('SYNC_GUI');
+            debug('SYNC_GUI');
             toggleCoil(coil);               // Записываем значение в ПЛК
             toggleLamp(vars, element);      // Записываем значение в Z-Wave актуатор
             sflags[element] = SYNC_NONE;    // Сбрасываем флаг
             mb_vars[element] = vars[element];
-            misc.LogMessage('SYNC_GUI - end');
+            debug('SYNC_GUI - end');
             break;
         case SYNC_ZWAVE:
-            misc.LogMessage('SYNC_ZWAVE');
+            debug('SYNC_ZWAVE');
             toggleCoil(coil);               // Записываем значение в ПЛК
+            sflags[element] = SYNC_NONE;    // Сбрасываем флаг
+            mb_vars[element] = vars[element];
+            break;
+        case SYNC_TIMER:
+            debug('SYNC_TIMER');
+            toggleCoil(coil);               // Записываем значение в ПЛК
+            toggleLamp(vars, element);      // Записываем значение в Z-Wave актуатор
             sflags[element] = SYNC_NONE;    // Сбрасываем флаг
             mb_vars[element] = vars[element];
             break;
         default:
-            misc.LogMessage('Wrong flag');
+            error('Wrong flag');
     }
 };
 
@@ -235,7 +248,7 @@ function toggleCoil(coil){
         coil_shift = 24;
     }
 
-    misc.LogMessage('Toggle coil: ' + coil + ". is connected: " + client.isConnected());
+    debug('Toggle coil: ' + coil + ". is connected: " + client.isConnected());
     if (!client.isConnected()) {
         connectModbus();
         return;
@@ -244,31 +257,31 @@ function toggleCoil(coil){
     // Switch on
     client.writeSingleCoil(coil_shift+coil1 , true, function (resp, err) {
         if (err) {
-            misc.LogMessage('Error write coil: ' + err);
+            error('Error write coil: ' + err);
             closeClient();
             return;
         }
         // Switch off
         client.writeSingleCoil(coil_shift+coil1 , false, function (resp, err) {
             if (err) {
-                misc.LogMessage('Error write coil: ' + err);
+                error('Error write coil: ' + err);
                 closeClient();
             }
         });
     });
 }
 // Для отображения лога из jsModbus
-//modbus.setLogger(misc.LogMessage );
+//modbus.setLogger(debug);
 var client;
 connectModbus();
 
 function connectModbus() {
 // create a modbus client
-    misc.LogMessage('Connecting to modbus ' + modbus_host + ':' + modbus_port);
+    log('Connecting to modbus ' + modbus_host + ':' + modbus_port);
     client = modbus.createTCPClient(modbus_port, modbus_host);
         cntr = 0;
         closeClient = function () {
-            misc.LogMessage('close modbus client function: ' + cntr);
+            debugy('close modbus client function: ' + cntr);
             cntr += 1;
             if (cntr === 5) {
                 client.close();
@@ -281,6 +294,6 @@ exports.isConnected = function() {
 };
 
 exports.reconnect = function() {
-    misc.LogMessage('Reconnection...');
+    debug('Reconnection...');
     connectModbus();
 };

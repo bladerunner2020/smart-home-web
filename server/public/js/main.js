@@ -150,7 +150,9 @@ function unSelectAll(){
             $item.parent().removeClass('panel-warning');
         }
 
-        data[name] = false;
+        if (name != 'var13') { // !!! var13 - управление светом в аквариуме
+            data[name] = false;
+        }
     }
 
     socket.emit('vars', data);
@@ -159,10 +161,10 @@ function unSelectAll(){
 $('#selectAll').click(selectAll);
 $('#unSelectAll').click(unSelectAll);
 
+var server_address = 'http://' + window.location.host;
+var socket = io.connect(server_address);
+console.log('client is connecting + '+ server_address );
 
-//var socket = io.connect('http://localhost:8000');
-var socket = io.connect('http://192.168.2.64:8000');
-console.log('client is connecting');
 
 socket.on('vars', function (data) {
     setVars(data);
