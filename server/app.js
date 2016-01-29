@@ -12,8 +12,8 @@ var modbusapp = require('../modbus/modbusapp');
 // var misc = require('../misc/mytools');
 var schedule = require('node-schedule');
 
-var EventLogger = require('node-windows').EventLogger;
-var log2 = new EventLogger('Smart Home');
+//var EventLogger = require('node-windows').EventLogger;
+//var log2 = new EventLogger('Smart Home');
 
 var WC_timer = 0;
 var valid_vars = ['var3' ,'var2', 'var5', 'var13'];
