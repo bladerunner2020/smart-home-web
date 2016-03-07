@@ -41,7 +41,8 @@ app.get('/json', function (req, res) {
         'bath' :vars['var10'],      // Ванная
         'boxroom' :vars['var11'],   // Кладовка
         'hall' :vars['var12'],      // Коридор
-        'smartoutlet1' : vars['var13'] // Свет в аквариуме
+        'smartoutlet1' : vars['var13'], // Свет в аквариуме
+        'doorlock' : vars['var14']
     });
 });
 
@@ -123,7 +124,8 @@ var vars = {
     var10: false,   // Ванная
     var11: false,   // Кладовка
     var12: false,    // Коридор
-    var13: false    // Свет в аквариуме
+    var13: false,    // Свет в аквариуме
+    var14: false
 };
 
 // Индикатор переключения
@@ -140,7 +142,8 @@ var flags = {
     var10: false,
     var11: false,
     var12: false,
-    var13: false
+    var13: false,
+    var14: false
 };
 
 var sflags = {
@@ -156,7 +159,8 @@ var sflags = {
     var10: 0,
     var11: 0,
     var12: 0,
-    var13: 0
+    var13: 0,
+    var14: 0
 };
 
 //modbusapp.syncronize(vars, flags);

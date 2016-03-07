@@ -6,6 +6,8 @@ var error = debug;
 var log = debug;
 // log.log = console.log.bind(console);
 
+var power_val = 0;
+
 var modbus = require('jsModbus');
 var util = require('util');
 //var misc = require('../misc/mytools');
@@ -171,6 +173,20 @@ read_modbus = function(sflags){
         read_modbus_element(sflags, 'var6', resp.coils[3]); // Зарезервировано
         read_modbus_element(sflags, 'var13', resp.coils[4]); // Умная розетка
     });
+
+    client.readInputRegister(2, 2, function(resp, err) {
+        if (err) {
+            error("Ошибка чтения Мобас " + err.message);
+            return;
+        }
+
+        var byte1  = resp.register[0] & 0xFF;
+        var byte2 = (resp.register[0] >> 8) ;
+        var byte3  = resp.register[1] & 0xFF;
+        var byte4 = (resp.register[1] >> 8) ;
+
+        power_val = decodeFloat([byte1, byte2, byte3, byte4], 1, 8, 23, -126, 127, true);
+    })
 };
 
 sync_element = function(vars, sflags, element, coil){
@@ -228,6 +244,8 @@ exports.syncronize2 = function(vars, sflags){
         sync_element(vars, sflags, 'var6', 11); // Резерв
 
         sync_element(vars, sflags, 'var13', 12); // Унмая розетка
+
+        sync_element(vars, sflags, 'var14', 13); // Унмая розетка
     }
 };
 
@@ -297,3 +315,50 @@ exports.reconnect = function() {
     debug('Reconnection...');
     connectModbus();
 };
+
+exports.getPowerValue = function() {
+    return power_val;
+};
+
+
+// Derived from http://stackoverflow.com/a/8545403/106786
+function decodeFloat(bytes, signBits, exponentBits, fractionBits, eMin, eMax, littleEndian) {
+    var totalBits = (signBits + exponentBits + fractionBits);
+
+    var binary = "";
+    for (var i = 0, l = bytes.length; i < l; i++) {
+        var bits = bytes[i].toString(2);
+        while (bits.length < 8)
+            bits = "0" + bits;
+
+        if (littleEndian)
+            binary = bits + binary;
+        else
+            binary += bits;
+    }
+
+    var sign = (binary.charAt(0) == '1')?-1:1;
+    var exponent = parseInt(binary.substr(signBits, exponentBits), 2) - eMax;
+    var significandBase = binary.substr(signBits + exponentBits, fractionBits);
+    var significandBin = '1'+significandBase;
+    i = 0;
+    var val = 1;
+    var significand = 0;
+
+    if (exponent == -eMax) {
+        if (significandBase.indexOf('1') == -1)
+            return 0;
+        else {
+            exponent = eMin;
+            significandBin = '0'+significandBase;
+        }
+    }
+
+    while (i < significandBin.length) {
+        significand += val * parseInt(significandBin.charAt(i));
+        val = val / 2;
+        i++;
+    }
+
+    return sign * significand * Math.pow(2, exponent);
+}
