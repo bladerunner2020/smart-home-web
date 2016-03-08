@@ -9,13 +9,30 @@ var app = express();
 var config = require('config');
 var server = require('http').Server(app);
 var modbusapp = require('../modbus/modbusapp');
+var mailer = require('../modbus/mymailer');
+
+
+modbusapp.Notifier.on('doorlock', function (status, power)  {
+    var text = "";
+    if (status) {
+        console.log('Door is locked. Current power is ', power);
+        text = 'Date and Time: ' + new Date().toLocaleString();
+        text += "<p>Power current is " + power.toFixed(2) +"</p>";
+        mailer.sendMyData('Door is locked!', text);
+    } else {
+        console.log('Door is unlocked');
+        text = 'Date and Time: ' + new Date().toLocaleString();
+        mailer.sendMyData('Door is unlocked!', text);
+    }
+});
+
+
 // var misc = require('../misc/mytools');
 var schedule = require('node-schedule');
 
 //var EventLogger = require('node-windows').EventLogger;
 //var log2 = new EventLogger('Smart Home');
 
-var WC_timer = 0;
 var valid_vars = ['var3' ,'var2', 'var5', 'var13'];
 
 debug('process.env.NODE_ENV = ' + process.env.NODE_ENV);
@@ -224,13 +241,12 @@ timerId = setInterval(function() {
 }, 500); // интервал в миллисекундах
 
 
-var timerId2 = setInterval(function() {
+setInterval(function() {
     modbusapp.readActuators(vars, sflags);
-
     io.emit('vars', vars);
 }, 2000); // интервал в миллисекундах
 
-var timerId3 = setInterval(function() {
+setInterval(function() {
     if (!modbusapp.isConnected()) {
         modbusapp.reconnect();
     }

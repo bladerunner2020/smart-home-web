@@ -6,6 +6,8 @@ var error = debug;
 var log = debug;
 // log.log = console.log.bind(console);
 
+const EventEmitter = require('events');
+
 var power_val = 0;
 
 var modbus = require('jsModbus');
@@ -139,6 +141,23 @@ read_modbus_element =function(sflags, name, coil){
     }
 };
 
+function ModbusEmitter() {
+    EventEmitter.call(this);
+}
+util.inherits(ModbusEmitter, EventEmitter);
+
+const Notifier = new ModbusEmitter();
+module.exports.Notifier = Notifier;
+
+function procecc_door_lock(coil) {
+    if (mb_vars['var14'] != coil){
+        if (mb_vars['var14'] != undefined)
+            Notifier.emit('doorlock', coil, power_val);
+        mb_vars['var14'] = coil;
+    }
+}
+
+
 read_modbus = function(sflags){
     // Читаем значения из контроллера
     client.readCoils (0, 8, function (resp, err) {
@@ -172,6 +191,8 @@ read_modbus = function(sflags){
         read_modbus_element(sflags, 'var5', resp.coils[2]); // Лампа настольная
         read_modbus_element(sflags, 'var6', resp.coils[3]); // Зарезервировано
         read_modbus_element(sflags, 'var13', resp.coils[4]); // Умная розетка
+
+        procecc_door_lock(resp.coils[5]); // Дверной замок  var14
     });
 
     client.readInputRegister(2, 2, function(resp, err) {
@@ -186,6 +207,7 @@ read_modbus = function(sflags){
         var byte4 = (resp.register[1] >> 8) ;
 
         power_val = decodeFloat([byte1, byte2, byte3, byte4], 1, 8, 23, -126, 127, true);
+       // console.log(power_val);
     })
 };
 
@@ -323,8 +345,6 @@ exports.getPowerValue = function() {
 
 // Derived from http://stackoverflow.com/a/8545403/106786
 function decodeFloat(bytes, signBits, exponentBits, fractionBits, eMin, eMax, littleEndian) {
-    var totalBits = (signBits + exponentBits + fractionBits);
-
     var binary = "";
     for (var i = 0, l = bytes.length; i < l; i++) {
         var bits = bytes[i].toString(2);
