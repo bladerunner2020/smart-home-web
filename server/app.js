@@ -100,13 +100,11 @@ app.get('/switch', function (req, res) {
     res.writeHead(200, {'content-type': 'text/plain'});
     res.write('lamp: ' + req.query.lamp + '\n');
     res.write('on: ' + req.query.on + '\n');
-    res.write('sw: ' + req.query.sw + '\n');
     res.end('That\'s all folks');
 
     var lamp = Number(req.query.lamp);
-    var is_on = (String(req.query.on).toLowerCase() == 'true');
-    var sw = Number(req.query.sw);
-    debug('Switch. Status = ' + is_on + ' Sw = ' + sw);
+
+    debug('Switch. Status = ' + req.query.on);
 
     debug('Switch. Lamp = ' + lamp);
     if (isNaN(lamp)) {
@@ -122,11 +120,27 @@ app.get('/switch', function (req, res) {
         return;
     }
 
-    vars[lamp_str_id] = is_on;
+    switch (String(req.query.on).toLowerCase()) {
+        case '1':
+        case 'true':
+            vars[lamp_str_id]  = true;
+            break;
+        case '0':
+        case 'false':
+            vars[lamp_str_id]  = false;
+            break;  
+        case 'toggle':
+            vars[lamp_str_id]  = !vars[lamp_str_id];
+            break;   
+        default:
+            error('Invalid command: ' + req.query.on);
+            return;
+
+    }
+
     sflags[lamp_str_id] = modbusapp.SYNC_GUI;
     flags[lamp_str_id] = true;     
     modbusapp.syncronize2(vars, sflags);
-    // zflags[lamp_str_id] = (sw1 != 1);
 });
 
 debug('Start app.js ' + __dirname);
