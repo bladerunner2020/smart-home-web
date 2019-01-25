@@ -33,7 +33,9 @@ var schedule = require('node-schedule');
 //var EventLogger = require('node-windows').EventLogger;
 //var log2 = new EventLogger('Smart Home');
 
-var valid_vars = ['var3' ,'var2', 'var5', 'var13'];
+// var valid_vars = ['var3' ,'var2', 'var5', 'var13'];
+var valid_vars = ['var1', 'var2', 'var3' , 'var4', 'var5', 'var6', 'var7', 'var8', 'var9', 'var10', 'var11',
+        'var12',  'var13', 'var14', 'var15'];
 
 debug('process.env.NODE_ENV = ' + process.env.NODE_ENV);
 debug('process.env.DEBUG = ' + process.env.DEBUG);
@@ -121,8 +123,10 @@ app.get('/switch', function (req, res) {
     }
 
     vars[lamp_str_id] = is_on;
-    flags[lamp_str_id] = true;
-    zflags[lamp_str_id] = (sw1 != 1);
+    sflags[lamp_str_id] = modbusapp.SYNC_GUI;
+    flags[lamp_str_id] = true;     
+    modbusapp.syncronize2(vars, sflags);
+    // zflags[lamp_str_id] = (sw1 != 1);
 });
 
 debug('Start app.js ' + __dirname);
