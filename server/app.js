@@ -96,11 +96,14 @@ app.get('/sensors', function (req, res) {
     }
 });
 
+var switchTimer = null;
 app.get('/switch', function (req, res) {
     res.writeHead(200, {'content-type': 'text/plain'});
     res.write('lamp: ' + req.query.lamp + '\n');
     res.write('on: ' + req.query.on + '\n');
     res.end('That\'s all folks');
+
+    if (switchTimer) { return; } // to avoid strange behavior of zwave controller (it sends toggle twice)
 
     var lamp = Number(req.query.lamp);
 
@@ -132,6 +135,8 @@ app.get('/switch', function (req, res) {
         case 'toggle':
             vars[lamp_str_id]  = !vars[lamp_str_id];
             break;   
+        case 'none':
+            return;    
         default:
             error('Invalid command: ' + req.query.on);
             return;
@@ -141,6 +146,9 @@ app.get('/switch', function (req, res) {
     sflags[lamp_str_id] = modbusapp.SYNC_GUI;
     flags[lamp_str_id] = true;     
     modbusapp.syncronize2(vars, sflags);
+    switchTimer = setTimeout(function() {
+        switchTimer = null;
+    }, 500);
 });
 
 debug('Start app.js ' + __dirname);
