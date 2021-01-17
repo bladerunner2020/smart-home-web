@@ -1,5 +1,4 @@
 {
-  // Customer module configs
   "General": {
     "port": 8000
   },
@@ -17,5 +16,12 @@
     "user": "",
     "pass": "",
     "device_path": "/ZWaveAPI/Run/"
+  },
+  "Mailer" : {
+    "UserID" : "",
+    "To" : "",
+    "ClientID" : "",
+    "Secret" : "",
+    "RefreshToken" : ""
   }
 }

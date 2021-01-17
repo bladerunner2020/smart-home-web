@@ -1,18 +1,17 @@
-process.chdir(__dirname); //  для запуска как сервис
-
-// TODO: проверть нужность массива flags - заменть его везде на sflags??
-var debug = require('debug')('app');
+// TODO: проверть нужность массива flags - заменить его везде на sflags??
+var debug = require('./mydebug')('app');
 var error = debug;
 
 var express = require('express');
 var app = express();
 var config = require('config');
 var server = require('http').Server(app);
-var modbusapp = require('../modbus/modbusapp');
-var mailer = require('../modbus/mymailer');
+var modbusapp = require('./modbusapp');
+var mailer = require('./mymailer');
 
 
 modbusapp.Notifier.on('doorlock', function (status, power)  {
+    vars['var14'] = status;
     var text = "";
     if (status) {
         console.log('Door is locked. Current power is ', power);
@@ -26,16 +25,11 @@ modbusapp.Notifier.on('doorlock', function (status, power)  {
     }
 });
 
-
-// var misc = require('../misc/mytools');
 var schedule = require('node-schedule');
 
-//var EventLogger = require('node-windows').EventLogger;
-//var log2 = new EventLogger('Smart Home');
-
-// var valid_vars = ['var3' ,'var2', 'var5', 'var13'];
+// По-видимому это z-wave устройства
 var valid_vars = ['var1', 'var2', 'var3' , 'var4', 'var5', 'var6', 'var7', 'var8', 'var9', 'var10', 'var11',
-        'var12',  'var13', 'var14', 'var15'];
+	'var12',  'var13', 'var14', 'var15'];
 
 debug('process.env.NODE_ENV = ' + process.env.NODE_ENV);
 debug('process.env.DEBUG = ' + process.env.DEBUG);
@@ -46,6 +40,12 @@ debug('Set port: ' + port);
 server.listen(port);
 
 app.use(express.static('public'));
+
+app.get('/time', function (req, res) {
+    var date = new Date();
+    res.json({"date" : date.toString()});
+});
+
 app.get('/json', function (req, res) {
     res.json({
         'mainroom' :vars['var1'],   // Гостиная
@@ -61,7 +61,9 @@ app.get('/json', function (req, res) {
         'boxroom' :vars['var11'],   // Кладовка
         'hall' :vars['var12'],      // Коридор
         'smartoutlet1' : vars['var13'], // Свет в аквариуме
-        'doorlock' : vars['var14']
+        'doorlock' : vars['var14'],
+        'smartoutlet2' : vars['var15'],
+        'power' : modbusapp.getPowerValue()
     });
 });
 
@@ -131,12 +133,12 @@ app.get('/switch', function (req, res) {
         case '0':
         case 'false':
             vars[lamp_str_id]  = false;
-            break;  
+            break;
         case 'toggle':
             vars[lamp_str_id]  = !vars[lamp_str_id];
-            break;   
+            break;
         case 'none':
-            return;    
+            return;
         default:
             error('Invalid command: ' + req.query.on);
             return;
@@ -144,7 +146,7 @@ app.get('/switch', function (req, res) {
     }
 
     sflags[lamp_str_id] = modbusapp.SYNC_GUI;
-    flags[lamp_str_id] = true;     
+    flags[lamp_str_id] = true;
     modbusapp.syncronize2(vars, sflags);
     switchTimer = setTimeout(function() {
         switchTimer = null;
@@ -168,7 +170,8 @@ var vars = {
     var11: false,   // Кладовка
     var12: false,    // Коридор
     var13: false,    // Свет в аквариуме
-    var14: false
+    var14: false,
+    var15: false     // Умная розетка 2
 };
 
 // Индикатор переключения
@@ -186,7 +189,8 @@ var flags = {
     var11: false,
     var12: false,
     var13: false,
-    var14: false
+    var14: false,
+    var15: false
 };
 
 var sflags = {
@@ -203,7 +207,8 @@ var sflags = {
     var11: 0,
     var12: 0,
     var13: 0,
-    var14: 0
+    var14: 0,
+    var15: 0
 };
 
 //modbusapp.syncronize(vars, flags);
@@ -228,6 +233,7 @@ io.on('connection', function (socket) {
     })
 });
 
+
 var time_on = config.get('Aquarium.on');
 var time_off = config.get('Aquarium.off');
 
@@ -244,17 +250,18 @@ ScheduleJob = function(time_str, cb, arg){
 
 setAquariumLight = function(status){
    debug('Turn aquarium light ' + status);
-    if (status ^ vars['var13'] ) {  // XOR:  true+false or false+true
+    // It looks like the light sometimes doesn't work due to this check
+    // if (status ^ vars['var13'] ) {  // XOR:  true+false or false+true
         vars['var13'] = status;
         sflags['var13'] = modbusapp.SYNC_TIMER;
-    }
+    //}
 };
 
 debug('Aquarium time on:  ' + time_on);
 debug('Aquarium time off:  '+ time_off);
 
-ScheduleJob(time_on, setAquariumLight, true);
-ScheduleJob(time_off, setAquariumLight, false);
+//ScheduleJob(time_on, setAquariumLight, true);
+//ScheduleJob(time_off, setAquariumLight, false);
 
 
 
