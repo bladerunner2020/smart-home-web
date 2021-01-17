@@ -2,9 +2,9 @@
   "name": "SmartHomeWeb",
   "version": "1.0.0",
   "description": "Providing web interface to PLC",
-  "main": "server/app.js",
+  "main": "app.js",
   "scripts": {
-    "start": "NODE_ENV=production node server/app.js",
+    "start": "NODE_ENV=production node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Alexander Pivovarov",
