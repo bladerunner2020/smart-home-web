@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  smart-home-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bladerunner2020/smart-home-web
+    restart: always
+    ports:
+      - '8000:8000'
+
+    environment:
+      NODE_CONFIG_DIR: /data
+      NODE_ENV: production
+      # DEBUG: 
+
+    volumes:
+      - data:/data
+
+volumes:
+  data:
