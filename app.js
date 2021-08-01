@@ -4,7 +4,7 @@ var error = debug;
 
 var express = require('express');
 var app = express();
-var config = require('config');
+var config = require('./save-config');
 var server = require('http').Server(app);
 var modbusapp = require('./modbusapp');
 var mailer = require('./mymailer');

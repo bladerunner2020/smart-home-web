@@ -14,7 +14,7 @@ var modbus = require('jsmodbus');
 var util = require('util');
 var lastresp = null;
 var http = require('http');
-var config = require('config');
+var config = require('./save-config');
 
 var z_user = config.get('ZWave.user');
 var z_pass = config.get('ZWave.pass');
