@@ -1,7 +1,7 @@
 /**
  * Created by bladerunner on 08.03.2016.
  */
-var config = require('config');
+ var config = require('./save-config');
 var nodemailer = require("nodemailer");
 var xoauth2 = require("xoauth2"),
     xoauth2gen;
