@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  node-red:
+    image: bladerunner2020/my-node-red-docker:latest
+    environment:
+      - TZ=Europe/Moscow # Server timezone
+    ports:
+      - 1880:1880
+    volumes:
+      - "node-red:/data" # node-red - каталог который выделит docker для хранения данных, /data - каталог внутри контейнера.
+    restart: always
+
+volumes:
+  node-red: # создание каталога node-red на хосте.
