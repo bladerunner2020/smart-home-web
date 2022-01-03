@@ -4,8 +4,7 @@ const express = require('express');
 const http = require('http');
 
 const {
-  vars, flags,
-  SYNC_GUI, SYNC_MODBUS, SYNC_ZWAVE
+  vars, SYNC_MODBUS, SYNC_ZWAVE, SYNC_API
 } = require('./vars-and-flags');
 const config = require('./save-config');
 const modbusapp = require('./modbusapp');
@@ -77,25 +76,26 @@ app.get('/switch', (req, res) => {
     console.error('... Error lamp ID');
     return;
   }
-  const lamp_str_id = `var${lamp}`;
-  console.log(`...Switching light for ${lamp_str_id}`);
+  const name = `var${lamp}`;
+  console.log(`...Switching light for ${name}`);
 
-  if (valid_vars.indexOf(lamp_str_id) === -1) {
-    console.error(`Invalid lamp id: ${lamp_str_id}`);
+  if (valid_vars.indexOf(name) === -1) {
+    console.error(`Invalid lamp id: ${name}`);
     return;
   }
 
+  const data = {};
   switch (String(req.query.on).toLowerCase()) {
     case '1':
     case 'true':
-      vars[lamp_str_id] = true;
+      data.name = true;
       break;
     case '0':
     case 'false':
-      vars[lamp_str_id] = false;
+      data.name = false;
       break;
     case 'toggle':
-      vars[lamp_str_id] = !vars[lamp_str_id];
+      data.name = !vars[name];
       break;
     case 'none':
       return;
@@ -103,9 +103,8 @@ app.get('/switch', (req, res) => {
       console.error(`Invalid command: ${req.query.on}`);
       return;
   }
+  synchronize(data, SYNC_API);
 
-  flags[lamp_str_id] = SYNC_GUI;
-  modbusapp.syncronize2(vars, flags);
   switchTimer = setTimeout(() => {
     switchTimer = null;
   }, 500);
@@ -144,21 +143,12 @@ pollModbus(true);
 console.log(`Start z-wave polling: ${zwaveTimeout}`);
 pollZwave(true);
 
-// let timerId = setInterval(() => {
-//   modbusapp.syncronize2(vars, flags);
-
-//   io.emit('vars', vars);
-// }, 500); // интервал в миллисекундах
-
-// setInterval(() => {
-//   modbusapp.readActuators(vars, flags);
-//   io.emit('vars', vars);
-// }, 2000); // интервал в миллисекундах
-
-// setInterval(() => {
-//   if (!modbusapp.isConnected()) {
-//     modbusapp.reconnect();
-//   }
-// }, 10000); // интервал в миллисекундах
+const reconnectModbus = () => {
+  setTimeout(() => {
+    pollModbus(); // restart polling
+    modbusapp.reconnect().catch(console.error).finally(reconnectModbus);
+  }, 60000);
+};
+reconnectModbus();
 
 console.log(`App is started: ${__dirname}`);

@@ -19,38 +19,22 @@ const port = config.get('Modbus.port', 502);
 const unitId = config.get('Modbus.unitId', 1);
 console.log(`Modbus: ${host}:${port}, unit ID: ${unitId}`);
 
-// const registerMap = [
-//   { name: 'var7', value: 0, coil: 0 }, // Coil 0, Верхний свет Кухня
-//   { name: 'var8', value: 0, coil: 1 }, // Coil 1, Дополнительный свет Кухня
-//   { name: 'var4', value: 0, coil: 2 }, // Coil 2, Верхний свет Детская
-//   { name: 'var1', value: 0, coil: 3 }, // Coil 3, Гостинная
-//   { name: 'var11', value: 0, coil: 4 }, // Coil 4, Кладовка
-//   { name: 'var12', value: 0, coil: 5 }, // Coil 5, Коридор
-//   { name: 'var10', value: 0, coil: 6 }, // Coil 6, Ванная
-//   { name: 'var9', value: 0, coil: 7 }, // Coil 7, Туалет
-//   {}, {}, {}, {}, {}, {}, {}, {}, // skip 8 coils
-
-//   { name: 'var3', value: 0, coil: 16 }, // Coil 16, Лампа Гостиная
-//   { name: 'var2', value: 0, coil: 17 }, // Coil 17, Шкаф Гостиная (подсветка)
-//   { name: 'var5', value: 0, coil: 18 }, // Coil 18, Детская Лампа настольная
-//   { name: 'var6', value: 0, coil: 19 }, // Coil 19, Зарезервировано
-//   { name: 'var13', value: 0, coil: 20 }, // Coil 20, Умная розетка
-//   { name: 'var14', value: 0, coil: 21 }, // Coil 20, Умная розетка
-//   { name: 'var15', value: 0, coil: 22 }, // Coil 20, Умная розетка
-// ];
-
 let writingInProgress = false;
 const registers = {};
 
-const closeModbus = () => {
+const closeModbus = () => new Promise((resolve, reject) => {
   try {
-    if (tcpSocket) tcpSocket.destroy();
+    if (tcpSocket) {
+      tcpSocket.once('close', resolve);
+      tcpSocket.once('error', reject);
+      tcpSocket.destroy();
+    }
   } catch (err) {
-    console.error(err);
+    reject(err);
   }
   modbusClient = null;
   tcpSocket = null;
-};
+});
 
 const connectModbus = () => new Promise((resolve, reject) => {
   if (modbusClient) {
@@ -155,10 +139,7 @@ const toggleCoil = (name, value) => {
 
 const isConnected = () => modbusClient.isConnected();
 
-const reconnect = function() {
-  closeModbus();
-  connectModbus();
-};
+const reconnect = () => closeModbus().catch(console.error).finally(() => connectModbus().catch(console.error));
 
 const getPowerValue = () => powerValue;
 
