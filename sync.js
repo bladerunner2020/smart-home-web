@@ -19,6 +19,7 @@ const syncElement = function(name, value, source) {
     case SYNC_MODBUS: // Данные изменились в ПЛК
       toggleLamp(name, value); // Записываем значение в Z-Wave актуатор
       break;
+    case SYNC_API:
     case SYNC_GUI: // Данные изменились в GUI
       toggleCoil(name, value); // Записываем значение в ПЛК
       toggleLamp(name, value); // Записываем значение в Z-Wave актуатор
@@ -26,9 +27,7 @@ const syncElement = function(name, value, source) {
     case SYNC_ZWAVE:
       toggleCoil(name, value); // Записываем значение в ПЛК
       break;
-    case SYNC_API:
 
-      break;
     default:
       console.error(`Wrong flag: ${source}`);
   }
