@@ -11,6 +11,7 @@ const modbusapp = require('./modbusapp');
 const { readActuators } = require('./zwave');
 const { synchronize } = require('./sync');
 const { createSocket, updateAllClients } = require('./gui');
+const { initializeAppleHomekit } = require('./apple');
 
 const modbusTimeout = config.get('Modbus.timeout', 500);
 const zwaveTimeout = config.get('ZWave.timeout', 2000);
@@ -150,5 +151,7 @@ const reconnectModbus = () => {
   }, 60000);
 };
 reconnectModbus();
+
+initializeAppleHomekit();
 
 console.log(`App is started: ${__dirname}`);

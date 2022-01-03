@@ -139,7 +139,11 @@ const toggleCoil = (name, value) => {
 
 const isConnected = () => modbusClient.isConnected();
 
-const reconnect = () => closeModbus().catch(console.error).finally(() => connectModbus().catch(console.error));
+const reconnect = () => new Promise((resolve) => {
+  closeModbus().catch(console.error).finally(() => {
+    setTimeout(resolve, 100);
+  });
+});
 
 const getPowerValue = () => powerValue;
 

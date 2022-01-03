@@ -2,3 +2,4 @@ node_modules
 config/production.json
 config/local.json
 yarn.error
+persist
