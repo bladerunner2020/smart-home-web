@@ -7,15 +7,16 @@ services:
     image: bladerunner2020/smart-home-web
     restart: always
     ports:
-      - '8000:8000'
-
+      - "8000:8000"
+      - "47129:47129"
+      - "47130:47130"
+      - "47131:47131"
+      - "5353:5353/udp"
     environment:
       NODE_CONFIG_DIR: /data
       NODE_ENV: production
       # DEBUG: 
 
     volumes:
-      - data:/data
+      - ./data:/data
 
-volumes:
-  data:
