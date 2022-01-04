@@ -5,6 +5,7 @@ const {
 const { updateAllClients } = require('./gui');
 const { toggleCoil } = require('./modbusapp');
 const { toggleLamp } = require('./zwave');
+const { toggleHomeKit } = require('./apple');
 
 const syncElement = function(name, value, source) {
   if (typeof vars[name] !== 'object') {
@@ -18,14 +19,17 @@ const syncElement = function(name, value, source) {
       break;
     case SYNC_MODBUS: // Данные изменились в ПЛК
       toggleLamp(name, value); // Записываем значение в Z-Wave актуатор
+      toggleHomeKit(name, value);
       break;
     case SYNC_API:
     case SYNC_GUI: // Данные изменились в GUI
       toggleCoil(name, value); // Записываем значение в ПЛК
       toggleLamp(name, value); // Записываем значение в Z-Wave актуатор
+      toggleHomeKit(name, value);
       break;
     case SYNC_ZWAVE:
       toggleCoil(name, value); // Записываем значение в ПЛК
+      toggleHomeKit(name, value);
       break;
 
     default:
@@ -38,7 +42,11 @@ const synchronize = (data, source) => {
 
   const keys = Object.keys(data);
   keys.forEach((name) => {
-    if (vars[name].value !== data[name]) syncElement(name, data[name], source);
+    if (typeof vars[name] === 'undefined') {
+      console.error(new Error(`Invalid request: ${name}`));
+    } else if (vars[name].value !== data[name]) {
+      syncElement(name, data[name], source);
+    }
   });
   updateAllClients(data);
 };

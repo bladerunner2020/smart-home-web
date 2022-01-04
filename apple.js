@@ -5,12 +5,13 @@ const {
 } = require('hap-nodejs');
 const storage = require('node-persist');
 const { vars, SYNC_API } = require('./vars-and-flags');
-const { synchronize } = require('./sync');
 const config = require('./save-config');
 
 const dir = config.get('hap.dir');
 const enable = config.get('hap.enable', true);
 const useBridge = config.get('hap.useBridge');
+
+const characteristics = {};
 
 if (dir) {
   console.log(`Persist storage dir: ${dir}`);
@@ -19,7 +20,7 @@ if (dir) {
   });
 }
 
-const initializeAppleHomekit = () => {
+const initializeAppleHomekit = (synchronize) => {
   if (!enable) {
     console.log('HAP is not enabled in config!');
     return;
@@ -50,6 +51,8 @@ const initializeAppleHomekit = () => {
       callback();
     });
 
+    characteristics[name] = onCharacteristic;
+
     accessory.addService(lightService); // adding the service to the accessory
     if (bridge && !noBridge) {
       bridge.addBridgedAccessory(accessory); // instead of publish
@@ -77,6 +80,13 @@ const initializeAppleHomekit = () => {
   console.log('Accessory setup finished!');
 };
 
+const toggleHomeKit = (name, value) => {
+  if (characteristics[name]) {
+    characteristics[name].updateValue(value);
+  }
+};
+
 module.exports = {
-  initializeAppleHomekit
+  initializeAppleHomekit,
+  toggleHomeKit
 };

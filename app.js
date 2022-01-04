@@ -40,21 +40,21 @@ app.get('/time', (req, res) => {
 
 app.get('/json', (req, res) => {
   res.json({
-    mainroom: vars.var1, // Гостиная
-    mainroom1: vars.var2, // Гостиная резерв
-    mainroom2: vars.var3, // Гостиная резерв
-    kidroom: vars.var4, // Детская
-    kidroom1: vars.var5, // Детская резерв
-    kidroom2: vars.var6, // Детская резерв
-    kitchen: vars.var7, // Верхний свет кухня
-    kitchen1: vars.var8, // Подсветка кухня
-    wc: vars.var9, // Туалет
-    bath: vars.var10, // Ванная
-    boxroom: vars.var11, // Кладовка
-    hall: vars.var12, // Коридор
-    smartoutlet1: vars.var13, // Свет в аквариуме
-    doorlock: vars.var14,
-    smartoutlet2: vars.var15,
+    mainroom: vars.var1.value, // Гостиная
+    mainroom1: vars.var2.value, // Гостиная резерв
+    mainroom2: vars.var3.value, // Гостиная резерв
+    kidroom: vars.var4.value, // Детская
+    kidroom1: vars.var5.value, // Детская резерв
+    kidroom2: vars.var6.value, // Детская резерв
+    kitchen: vars.var7.value, // Верхний свет кухня
+    kitchen1: vars.var8.value, // Подсветка кухня
+    wc: vars.var9.value, // Туалет
+    bath: vars.var10.value, // Ванная
+    boxroom: vars.var11.value, // Кладовка
+    hall: vars.var12.value, // Коридор
+    smartoutlet1: vars.var13.value, // Свет в аквариуме
+    doorlock: vars.var14.value,
+    smartoutlet2: vars.var15.value,
     power: modbusapp.getPowerValue()
   });
 });
@@ -89,14 +89,14 @@ app.get('/switch', (req, res) => {
   switch (String(req.query.on).toLowerCase()) {
     case '1':
     case 'true':
-      data.name = true;
+      data[name] = true;
       break;
     case '0':
     case 'false':
-      data.name = false;
+      data[name] = false;
       break;
     case 'toggle':
-      data.name = !vars[name];
+      data[name] = !vars[name];
       break;
     case 'none':
       return;
@@ -152,6 +152,6 @@ const reconnectModbus = () => {
 };
 reconnectModbus();
 
-initializeAppleHomekit();
+initializeAppleHomekit(synchronize);
 
 console.log(`App is started: ${__dirname}`);
