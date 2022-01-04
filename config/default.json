@@ -4,24 +4,21 @@
   },
   "Modbus" :{
     "host" : "localhost",
-    "port" : "502"
-  },
-  "Aquarium": {
-    "on" : "07:00",
-    "off": "23:00"
+    "port" : "502",
+    "unitId": 1,
+    "timeout": 500
   },
   "ZWave" : {
     "host": "localhost",
     "port": "8083",
     "user": "",
     "pass": "",
-    "device_path": "/ZWaveAPI/Run/"
+    "device_path": "/ZWaveAPI/Run/",
+    "timeout": 2000
   },
-  "Mailer" : {
-    "UserID" : "",
-    "To" : "",
-    "ClientID" : "",
-    "Secret" : "",
-    "RefreshToken" : ""
+  "hap" : {
+    "enable": true,
+    "dir": "./persist",
+    "useBridge": false
   }
 }
