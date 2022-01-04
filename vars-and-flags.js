@@ -95,6 +95,7 @@ const vars = {
     coil: 20,
     zwave: 8,
     title: 'Аквариум - свет',
+    noBridge: true,
     value: false
   },
   var15: {
