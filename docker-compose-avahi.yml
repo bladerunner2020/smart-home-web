@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  mdns-reflector:
+    image: flungo/avahi
+    container_name: mdns-reflector
+    restart: always
+    environment:
+      REFLECTOR_ENABLE_REFLECTOR: yes
+    networks:
+      - smart-home_default
+      - lan:
+        - ipv4_address: 192.168.2.77
+networks:
+  - smart-home_default:
+    name: smart-home_default
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/24 # or 172.25.0.0/16 ?
+  - lan:
+    name: lan
+    driver: macvlan
+    driver_opts:
+      parent: enp2s0

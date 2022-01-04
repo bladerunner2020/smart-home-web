@@ -10,6 +10,9 @@ const config = require('./save-config');
 const dir = config.get('hap.dir');
 const enable = config.get('hap.enable', true);
 const useBridge = config.get('hap.useBridge');
+const serviceName = config.get('hap.serviceName', 'hap-dev.booco');
+const serviceMac = config.get('hap.serviceMac', '20:00:77:77:77:00');
+console.log(`HAP: ${serviceName}, ${serviceMac}`);
 
 const characteristics = {};
 
@@ -26,11 +29,11 @@ const initializeAppleHomekit = (synchronize) => {
     return;
   }
   console.log(`Initializing HAP. Using bridge: ${useBridge}`);
-  const bridge = useBridge ? new Bridge('HAP Booco', uuid.generate('hap.booco.bridge')) : null;
+  const bridge = useBridge ? new Bridge('HAP Booco', uuid.generate(`${serviceName}.bridge`)) : null;
 
   Object.keys(vars).forEach((name, index) => {
     const { title, noBridge = false } = vars[name];
-    const accessoryUuid = uuid.generate(`hap.booco.${name}'`);
+    const accessoryUuid = uuid.generate(`${serviceName}.${name}'`);
     const accessory = new Accessory(`${title}`, accessoryUuid);
     const lightService = new Service.Lightbulb(title);
 
@@ -58,19 +61,23 @@ const initializeAppleHomekit = (synchronize) => {
       bridge.addBridgedAccessory(accessory); // instead of publish
     } else {
       const s = `00${index}`.slice(-2);
+      const port = 47129 + index;
+      const pincode = '111-22-333';
+      const username = serviceMac.slice(0, -2) + s;
       // once everything is set up, we publish the accessory. Publish should always be the last step!
       accessory.publish({
-        username: `20:22:77:77:77:${s}`,
-        pincode: '111-22-333',
-        port: 47129 + index,
+        username, // replace last 2 digits with index
+        pincode,
+        port,
         category: Categories.LIGHTBULB, // value here defines the symbol shown in the pairing screen
       });
+      console.log(`Publishing ${name}, port: ${port}, pincode: ${pincode}, ${title}`);
     }
   });
 
   if (bridge) {
     bridge.publish({
-      username: '20:22:77:77:00:00',
+      username: serviceMac,
       pincode: '111-22-333',
       port: 47128,
       category: Categories.BRIDGE, // value here defines the symbol shown in the pairing screen
