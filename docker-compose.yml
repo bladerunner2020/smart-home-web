@@ -28,11 +28,28 @@ services:
       - "47145:47145"
       - "47146:47146"
       - "47147:47147"
+
     environment:
       NODE_CONFIG_DIR: /data
       NODE_ENV: production
-      # DEBUG: 
+      # DEBUG: HAP-NodeJS:*
 
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+  
     volumes:
       - ./data:/data
+    networks:
+      lan:
+        ipv4_address: 192.168.2.75
 
+networks:
+  lan:
+    name: lan
+    driver: macvlan
+    driver_opts:
+      parent: enp2s0
+    ipam:
+      config:
+        - subnet: "192.168.2.0/24"
+          gateway: "192.168.2.1"
