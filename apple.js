@@ -1,14 +1,34 @@
 /* eslint-disable no-console */
 // const hap = require('hap-nodejs');
 const {
-  Accessory, Characteristic, CharacteristicEventTypes, Service, Categories, uuid
+  Accessory, Characteristic, CharacteristicEventTypes, Service, Categories, Bridge, uuid
 } = require('hap-nodejs');
+const storage = require('node-persist');
 const { vars, SYNC_API } = require('./vars-and-flags');
 const { synchronize } = require('./sync');
+const config = require('./save-config');
+
+const dir = config.get('hap.dir');
+const enable = config.get('hap.enable', true);
+const useBridge = config.get('hap.useBridge');
+
+if (dir) {
+  console.log(`Persist storage dir: ${dir}`);
+  storage.init({
+    dir
+  });
+}
 
 const initializeAppleHomekit = () => {
+  if (!enable) {
+    console.log('HAP is not enabled in config!');
+    return;
+  }
+  console.log(`Initializing HAP. Using bridge: ${useBridge}`);
+  const bridge = useBridge ? new Bridge('HAP Booco', uuid.generate('hap.booco.bridge')) : null;
+
   Object.keys(vars).forEach((name, index) => {
-    const { title } = vars[name];
+    const { title, noBridge = false } = vars[name];
     const accessoryUuid = uuid.generate(`hap.booco.${name}'`);
     const accessory = new Accessory(`${title}`, accessoryUuid);
     const lightService = new Service.Lightbulb(title);
@@ -31,17 +51,28 @@ const initializeAppleHomekit = () => {
     });
 
     accessory.addService(lightService); // adding the service to the accessory
-
-    const s = `00${index}`.slice(-2);
-
-    // once everything is set up, we publish the accessory. Publish should always be the last step!
-    accessory.publish({
-      username: `20:22:77:77:77:${s}`,
-      pincode: '111-22-333',
-      port: 47129 + index,
-      category: Categories.LIGHTBULB, // value here defines the symbol shown in the pairing screen
-    });
+    if (bridge && !noBridge) {
+      bridge.addBridgedAccessory(accessory); // instead of publish
+    } else {
+      const s = `00${index}`.slice(-2);
+      // once everything is set up, we publish the accessory. Publish should always be the last step!
+      accessory.publish({
+        username: `20:22:77:77:77:${s}`,
+        pincode: '111-22-333',
+        port: 47129 + index,
+        category: Categories.LIGHTBULB, // value here defines the symbol shown in the pairing screen
+      });
+    }
   });
+
+  if (bridge) {
+    bridge.publish({
+      username: '20:22:77:77:00:00',
+      pincode: '111-22-333',
+      port: 47128,
+      category: Categories.BRIDGE, // value here defines the symbol shown in the pairing screen
+    });
+  }
 
   console.log('Accessory setup finished!');
 };
