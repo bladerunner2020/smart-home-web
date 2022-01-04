@@ -71,7 +71,7 @@ const initializeAppleHomekit = (synchronize) => {
         port,
         category: Categories.LIGHTBULB, // value here defines the symbol shown in the pairing screen
       });
-      console.log(`Publishing ${name}, port: ${port}, pincode: ${pincode}, ${title}`);
+      console.log(`Publishing ${name}, port: ${port}, pincode: ${pincode}, ${username}, ${title}`);
     }
   });
 
