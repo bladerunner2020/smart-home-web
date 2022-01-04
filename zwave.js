@@ -41,7 +41,7 @@ const readActuators = () => new Promise((resolve, reject) => {
 
   const promisses = [];
   zDevices.forEach(({ name, zwave }) => {
-    promisses.push(readZwaveActuator(name, zwave));
+    promisses.push(readZwaveActuator(name, zwave).catch(console.error));
   });
   Promise.all(promisses).then((result) => {
     let changed = false;
