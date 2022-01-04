@@ -53,7 +53,7 @@ app.get('/json', (req, res) => {
     boxroom: vars.var11.value, // Кладовка
     hall: vars.var12.value, // Коридор
     smartoutlet1: vars.var13.value, // Свет в аквариуме
-    doorlock: vars.var14.value,
+    // doorlock: vars.var14.value,
     smartoutlet2: vars.var15.value,
     power: modbusapp.getPowerValue()
   });
@@ -80,7 +80,7 @@ app.get('/switch', (req, res) => {
   const name = `var${lamp}`;
   console.log(`...Switching light for ${name}`);
 
-  if (valid_vars.indexOf(name) === -1) {
+  if (valid_vars.indexOf(name) === -1 || !vars[name]) {
     console.error(`Invalid lamp id: ${name}`);
     return;
   }
@@ -96,7 +96,7 @@ app.get('/switch', (req, res) => {
       data[name] = false;
       break;
     case 'toggle':
-      data[name] = !vars[name];
+      data[name] = !vars[name].value;
       break;
     case 'none':
       return;
