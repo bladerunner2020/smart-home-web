@@ -6,6 +6,11 @@ const { updateAllClients } = require('./gui');
 const { toggleCoil } = require('./modbusapp');
 const { toggleLamp } = require('./zwave');
 const { toggleHomeKit } = require('./apple');
+const config = require('./save-config');
+const { toggleBoocoDevice } = require('./booco');
+
+const zWaveEnable = config.get('ZWave.enable', true);
+const boocoEnable = config.get('booco.enable', false);
 
 const syncElement = function(name, value, source) {
   if (typeof vars[name] !== 'object') {
@@ -18,13 +23,21 @@ const syncElement = function(name, value, source) {
     case SYNC_NONE:
       break;
     case SYNC_MODBUS: // Данные изменились в ПЛК
-      toggleLamp(name, value); // Записываем значение в Z-Wave актуатор
+      if (zWaveEnable) {
+        toggleLamp(name, value); // Записываем значение в Z-Wave актуатор
+      } else if (boocoEnable) {
+        toggleBoocoDevice(name, value);
+      }
       toggleHomeKit(name, value);
       break;
     case SYNC_API:
     case SYNC_GUI: // Данные изменились в GUI
       toggleCoil(name, value); // Записываем значение в ПЛК
-      toggleLamp(name, value); // Записываем значение в Z-Wave актуатор
+      if (zWaveEnable) {
+        toggleLamp(name, value); // Записываем значение в Z-Wave актуатор
+      } else if (boocoEnable) {
+        toggleBoocoDevice(name, value);
+      }
       toggleHomeKit(name, value);
       break;
     case SYNC_ZWAVE:

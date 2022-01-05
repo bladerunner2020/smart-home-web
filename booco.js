@@ -125,6 +125,16 @@ const updateData = (now) => {
   }, now ? 0 : 180000);
 };
 
+const toggleBoocoDevice = (name, value) => {
+  const { booco: deviceName } = vars[name] || {};
+  const channel = value ? 'powerOn' : 'powerOff';
+  if (!deviceName) return;
+
+  httpRequest({
+    path: `/api/v1/equipment/set/${deviceName}/${channel}`
+  }).catch(console.error);
+};
+
 const initializeBooco = (sync) => {
   synchronize = sync;
 };
@@ -132,6 +142,7 @@ const initializeBooco = (sync) => {
 if (enable) updateData(true);
 
 module.exports = {
+  toggleBoocoDevice,
   notifyChanges,
   initializeBooco
 };
