@@ -12,11 +12,14 @@ const { readActuators } = require('./zwave');
 const { synchronize } = require('./sync');
 const { createSocket, updateAllClients } = require('./gui');
 const { initializeAppleHomekit } = require('./apple');
+const { notifyChanges, initializeBooco } = require('./booco');
 
 const modbusTimeout = config.get('Modbus.timeout', 500);
 const zwaveTimeout = config.get('ZWave.timeout', 2000);
+const zwaveEnable = config.get('ZWave.enable', true);
 
 const app = express();
+app.use(express.json());
 const server = http.Server(app);
 
 // По-видимому это z-wave устройства
@@ -57,6 +60,10 @@ app.get('/json', (req, res) => {
     smartoutlet2: vars.var15.value,
     power: modbusapp.getPowerValue()
   });
+});
+
+app.post('/booco', (req) => {
+  notifyChanges(req.body);
 });
 
 let switchTimer = null;
@@ -127,6 +134,8 @@ const pollModbus = (now) => {
 
 let zwaveUpdateTimer = null;
 const pollZwave = (now) => {
+  if (!zwaveEnable) return;
+
   if (zwaveUpdateTimer) clearTimeout(zwaveUpdateTimer);
   zwaveUpdateTimer = setTimeout(() => {
     zwaveUpdateTimer = null;
@@ -141,8 +150,10 @@ updateAllClients();
 console.log(`Start modbus polling: ${modbusTimeout}`);
 pollModbus(true);
 
-console.log(`Start z-wave polling: ${zwaveTimeout}`);
-pollZwave(true);
+if (zwaveEnable) {
+  console.log(`Start z-wave polling: ${zwaveTimeout}`);
+  pollZwave(true);
+}
 
 const reconnectModbus = () => {
   setTimeout(() => {
@@ -153,5 +164,6 @@ const reconnectModbus = () => {
 reconnectModbus();
 
 initializeAppleHomekit(synchronize);
+initializeBooco(synchronize);
 
 console.log(`App is started: ${__dirname}`);
