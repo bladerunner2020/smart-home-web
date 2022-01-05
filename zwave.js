@@ -9,6 +9,7 @@ const password = config.get('ZWave.pass');
 const host = config.get('ZWave.host');
 const port = config.get('ZWave.port');
 const devicePath = config.get('ZWave.device_path');
+const enable = config.get('ZWave.enable', true);
 
 let writingInProgress = false;
 
@@ -34,7 +35,7 @@ const zDevices = Object
   .filter(({ zwave }) => typeof zwave !== 'undefined' && zwave !== null);
 
 const readActuators = () => new Promise((resolve, reject) => {
-  if (writingInProgress) {
+  if (writingInProgress || !enable) {
     resolve(null);
     return;
   }
@@ -57,6 +58,8 @@ const readActuators = () => new Promise((resolve, reject) => {
 });
 
 const toggleLamp = (name, value) => {
+  if (!enable) return;
+
   const { zwave } = vars[name];
   if (typeof zwave === 'undefined' || zwave === null) return; // no associated z-wave device
   writingInProgress = true;
