@@ -18,6 +18,7 @@ const vars = {
     coil: 17,
     zwave: 6,
     title: 'Гостиная - подсветка',
+    booco: 'LedMain',
     value: false
   },
   var3: {
@@ -25,6 +26,7 @@ const vars = {
     coil: 16,
     zwave: 5,
     title: 'Гостиная - лампа',
+    booco: 'LampMain',
     value: false
   },
   var4: {
@@ -39,6 +41,7 @@ const vars = {
     coil: 18,
     zwave: 7,
     title: 'Детская - лампа настольная',
+    booco: 'LampKid',
     value: false
   },
   var6: {
@@ -95,6 +98,7 @@ const vars = {
     coil: 20,
     zwave: 8,
     title: 'Аквариум - свет',
+    booco: 'Aquarium',
     noBridge: true,
     value: false
   },
@@ -104,6 +108,7 @@ const vars = {
     swCoil: 29,
     zwave: 9,
     title: 'Умная розетка',
+    booco: 'SmartPlug1',
     value: false
   }
 };
