@@ -8,7 +8,7 @@ const password = config.get('booco.password');
 const hostname = config.get('booco.host');
 const port = config.get('booco.port');
 const target = config.get('booco.target');
-const enable = config.get('booco.enable', true);
+const enable = config.get('booco.enable', false);
 
 let authToken = null;
 let userId = null;
@@ -49,6 +49,7 @@ const httpRequest = ({ path, data, method = data ? 'POST' : 'GET' }) => new Prom
       }
     });
   });
+  req.on('error', reject);
   if (postData) req.write(postData);
   req.end();
 });
