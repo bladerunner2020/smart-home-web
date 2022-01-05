@@ -130,9 +130,11 @@ const toggleBoocoDevice = (name, value) => {
   const channel = value ? 'powerOn' : 'powerOff';
   if (!deviceName) return;
 
-  httpRequest({
-    path: `/api/v1/equipment/set/${deviceName}/${channel}`
-  }).catch(console.error);
+  login()
+    .then(() => httpRequest({
+      path: `/api/v1/equipment/set/${deviceName}/${channel}`
+    }).catch(console.error))
+    .catch(console.error);
 };
 
 const initializeBooco = (sync) => {
