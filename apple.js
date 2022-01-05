@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
 // const hap = require('hap-nodejs');
 const {
-  Accessory, Characteristic, CharacteristicEventTypes, Service, Categories, Bridge, uuid
+  Accessory, Characteristic, CharacteristicEventTypes, Service, Categories, Bridge, HAPStorage, uuid
 } = require('hap-nodejs');
-const storage = require('node-persist');
+const path = require('path');
 const { vars, SYNC_API } = require('./vars-and-flags');
 const config = require('./save-config');
 
@@ -17,10 +17,9 @@ console.log(`HAP: ${serviceName}, ${serviceMac}`);
 const characteristics = {};
 
 if (dir) {
-  console.log(`Persist storage dir: ${dir}`);
-  storage.init({
-    dir
-  });
+  const storagePath = path.resolve(__dirname, dir);
+  console.log(`Persist storage dir: ${storagePath}`);
+  HAPStorage.setCustomStoragePath(storagePath);
 }
 
 const initializeAppleHomekit = (synchronize) => {
@@ -30,11 +29,21 @@ const initializeAppleHomekit = (synchronize) => {
   }
   console.log(`Initializing HAP. Using bridge: ${useBridge}`);
   const bridge = useBridge ? new Bridge('HAP Booco', uuid.generate(`${serviceName}.bridge`)) : null;
+  if (bridge) {
+    bridge
+      .getService(Service.AccessoryInformation)
+      .setCharacteristic(Characteristic.Manufacturer, 'BOOCO')
+      .setCharacteristic(Characteristic.Model, 'BOOCO REST API Bridge');
+  }
 
   Object.keys(vars).forEach((name, index) => {
     const { title, noBridge = false } = vars[name];
     const accessoryUuid = uuid.generate(`${serviceName}.${name}'`);
     const accessory = new Accessory(`${title}`, accessoryUuid);
+    accessory
+      .getService(Service.AccessoryInformation)
+      .setCharacteristic(Characteristic.Manufacturer, 'BOOCO')
+      .setCharacteristic(Characteristic.Model, 'BOOCO REST API Device');
     const lightService = new Service.Lightbulb(title);
 
     // 'On' characteristic is required for the light service
