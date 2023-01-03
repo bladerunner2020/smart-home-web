@@ -10,7 +10,7 @@
   "author": "Alexander Pivovarov",
   "license": "ISC",
   "dependencies": {
-    "config": "^1.19.0",
+    "config": "^1.31.0",
     "debug": "^2.2.0",
     "express": "^4.13.3",
     "jsmodbus": "^0.5.0",
