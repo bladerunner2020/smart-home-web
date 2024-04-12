@@ -4,3 +4,4 @@ config/local.json
 yarn.error
 persist
 data
+.vscode

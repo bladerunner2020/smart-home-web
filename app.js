@@ -32,7 +32,7 @@ console.log(`process.env.DEBUG = ${process.env.DEBUG}`);
 
 const port = config.get('General.port');
 
-server.listen(port, () => console.log(`Listenning at ${port}`));
+server.listen(port, () => console.log(`Listening at ${port}`));
 createSocket(server, synchronize);
 
 app.use(express.static('public'));
@@ -167,7 +167,7 @@ const pollZwave = (now) => {
   zwaveUpdateTimer = setTimeout(() => {
     zwaveUpdateTimer = null;
     readActuators().then((data) => {
-      console.log('zwave', JSON.stringify(data));
+      // console.log('zwave', JSON.stringify(data));
       synchronize(data, SYNC_ZWAVE);
     }).finally(() => pollZwave());
   }, now ? 0 : zwaveTimeout);
