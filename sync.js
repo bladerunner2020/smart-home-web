@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 const {
-  vars, SYNC_NONE, SYNC_MODBUS, SYNC_GUI, SYNC_ZWAVE, SYNC_API
+  vars, SYNC_NONE, SYNC_MODBUS, SYNC_GUI, SYNC_ZWAVE, SYNC_API, SYNC_FORCE_ZWAVE
 } = require('./vars-and-flags');
 const { updateAllClients } = require('./gui');
 const { toggleCoil } = require('./modbusapp');
@@ -44,6 +44,11 @@ const syncElement = function(name, value, source) {
       toggleCoil(name, value); // Записываем значение в ПЛК
       toggleHomeKit(name, value);
       break;
+    case SYNC_FORCE_ZWAVE:
+      toggleCoil(name, value); // Записываем значение в ПЛК
+      toggleLamp(name, value); // Записываем значение в Z-Wave актуатор
+      toggleHomeKit(name, value);
+      break;
 
     default:
       console.error(`Wrong flag: ${source}`);
@@ -57,7 +62,7 @@ const synchronize = (data, source) => {
   keys.forEach((name) => {
     if (typeof vars[name] === 'undefined') {
       console.error(new Error(`Invalid request: ${name}`));
-    } else if (vars[name].value !== data[name]) {
+    } else if (vars[name].value !== data[name] || source === SYNC_FORCE_ZWAVE) {
       syncElement(name, data[name], source);
     }
   });

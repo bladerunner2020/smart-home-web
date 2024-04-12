@@ -1,3 +1,4 @@
+/* eslint-disable */
 
 //Данные с сервера
 var listGroup = $('.list-group-item');
@@ -148,10 +149,6 @@ function unSelectAll(){
             checkAll($item);
         }else{
             $item.parent().removeClass('panel-warning');
-        }
-
-        if (name != 'var13') { // !!! var13 - управление светом в аквариуме
-            data[name] = false;
         }
     }
 

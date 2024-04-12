@@ -3,6 +3,7 @@ const SYNC_MODBUS = 2;
 const SYNC_GUI = 3;
 const SYNC_ZWAVE = 4;
 const SYNC_API = 5;
+const SYNC_FORCE_ZWAVE = 6;
 
 // Переменные контроллера
 const vars = {
@@ -10,7 +11,7 @@ const vars = {
     name: 'var1',
     coil: 3,
     zwave: null,
-    title: 'Гостинная - верхний свет',
+    title: 'Гостиная - верхний свет',
     value: false
   },
   var2: {
@@ -102,15 +103,39 @@ const vars = {
     noBridge: true,
     value: false
   },
+
+  // Специальный элемент, который используется для мастер выключателя
   var15: {
     name: 'var15',
     coil: 22,
     swCoil: 29,
+    title: 'Умная розетка',
+    noBridge: true,
+    value: false
+  },
+
+  var16: {
+    name: 'var16',
+    zwave: 'devices[12].instances[0]',
+    title: 'Норка верхний',
+    value: false
+  },
+
+  var17: {
+    name: 'var17',
+    zwave: 'devices[12].instances[2]',
+    title: 'Норка стол',
+    value: false
+  },
+
+  var18: {
+    name: 'var18',
     zwave: 9,
     title: 'Умная розетка',
     booco: 'SmartPlug1',
     value: false
-  }
+  },
+
 };
 
 module.exports = {
@@ -119,6 +144,6 @@ module.exports = {
   SYNC_GUI,
   SYNC_ZWAVE,
   SYNC_API,
-
+  SYNC_FORCE_ZWAVE,
   vars
 };

@@ -17,7 +17,9 @@ const cmdBase = `http://${username}:${password}@${host}:${port}${devicePath}`;
 console.log(`z-wave command base: ${cmdBase}`);
 
 const readZwaveActuator = (name, zwave) => new Promise((resolve, reject) => {
-  const url = `${cmdBase}devices[${zwave}].SwitchBinary.data.level.value`;
+  const url = typeof zwave === 'string'
+    ? `${cmdBase}${zwave}.SwitchBinary.data.level.value`
+    : `${cmdBase}devices[${zwave}].SwitchBinary.data.level.value`;
 
   http.get(url, (res) => {
     res.on('data', (chunk) => {
@@ -40,11 +42,11 @@ const readActuators = () => new Promise((resolve, reject) => {
     return;
   }
 
-  const promisses = [];
+  const promises = [];
   zDevices.forEach(({ name, zwave }) => {
-    promisses.push(readZwaveActuator(name, zwave).catch(console.error));
+    promises.push(readZwaveActuator(name, zwave).catch(console.error));
   });
-  Promise.all(promisses).then((result) => {
+  Promise.all(promises).then((result) => {
     let changed = false;
     const res = {};
     result.forEach(({ name, value }) => {
@@ -62,8 +64,11 @@ const toggleLamp = (name, value) => {
 
   const { zwave } = vars[name];
   if (typeof zwave === 'undefined' || zwave === null) return; // no associated z-wave device
+
   writingInProgress = true;
-  const url = `${cmdBase}devices[${zwave}].Basic.Set(${value ? 1 : 0})`;
+  const url = typeof zwave === 'string'
+    ? `${cmdBase}${zwave}.SwitchBinary.Set(${value ? 1 : 0})`
+    : `${cmdBase}devices[${zwave}].Basic.Set(${value ? 1 : 0})`;
   console.log(`Toggle z-wave ${url}`);
   http.get(url, (res) => {
     console.log(`Got response: ${res.statusCode}`);

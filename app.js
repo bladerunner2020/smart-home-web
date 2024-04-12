@@ -4,7 +4,8 @@ const express = require('express');
 const http = require('http');
 
 const {
-  vars, SYNC_MODBUS, SYNC_ZWAVE, SYNC_API
+  vars, SYNC_MODBUS, SYNC_ZWAVE, SYNC_API,
+  SYNC_FORCE_ZWAVE
 } = require('./vars-and-flags');
 const config = require('./save-config');
 const modbusapp = require('./modbusapp');
@@ -24,7 +25,7 @@ const server = http.Server(app);
 
 // По-видимому это z-wave устройства
 const valid_vars = ['var1', 'var2', 'var3', 'var4', 'var5', 'var6', 'var7', 'var8', 'var9', 'var10', 'var11',
-  'var12', 'var13', 'var14', 'var15'];
+  'var12', 'var13', 'var14', 'var15', 'var16', 'var17', 'var18'];
 
 console.log(`process.env.NODE_ENV = ${process.env.NODE_ENV}`);
 console.log(`process.env.DEBUG = ${process.env.DEBUG}`);
@@ -118,15 +119,41 @@ app.get('/switch', (req, res) => {
   }, 500);
 });
 
+let globalTriggerVar15 = false;
+
 let modbusUpdateTimer = null;
 const pollModbus = (now) => {
   if (modbusUpdateTimer) clearTimeout(modbusUpdateTimer);
+  synchronize({ var15: true }, SYNC_API);
+  globalTriggerVar15 = true;
   modbusUpdateTimer = setTimeout(() => {
     modbusUpdateTimer = null;
     modbusapp
       .update()
       .then((data) => {
+        // console.log(data, JSON.stringify(data));
+        if (data) {
+          if (data.var15 === true) {
+            globalTriggerVar15 = true;
+          } else if (data.var15 === false && globalTriggerVar15) {
+            // switch off zwave devices
+            const zwaveData = {};
+            Object.keys(vars).forEach((name) => {
+              if (vars[name].zwave) {
+                zwaveData[name] = false;
+              }
+            });
+            zwaveData.var15 = true;
+            synchronize(zwaveData, SYNC_FORCE_ZWAVE);
+          } else if (data.var15 === true) {
+            globalTriggerVar15 = true;
+          }
+        }
         synchronize(data, SYNC_MODBUS);
+        if (!globalTriggerVar15) {
+          // включить var15 как триггер
+          synchronize({ var15: true }, SYNC_FORCE_ZWAVE);
+        }
       })
       .finally(() => pollModbus());
   }, now ? 0 : modbusTimeout);
@@ -140,6 +167,7 @@ const pollZwave = (now) => {
   zwaveUpdateTimer = setTimeout(() => {
     zwaveUpdateTimer = null;
     readActuators().then((data) => {
+      console.log('zwave', JSON.stringify(data));
       synchronize(data, SYNC_ZWAVE);
     }).finally(() => pollZwave());
   }, now ? 0 : zwaveTimeout);
