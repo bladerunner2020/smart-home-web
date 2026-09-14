@@ -44,12 +44,17 @@ const readActuators = () => new Promise((resolve, reject) => {
 
   const promises = [];
   zDevices.forEach(({ name, zwave }) => {
-    promises.push(readZwaveActuator(name, zwave).catch(console.error));
+    promises.push(readZwaveActuator(name, zwave).catch((err) => console.log('readZwaveActuator error', err.message)));
   });
   Promise.all(promises).then((result) => {
+    if (!result) {
+      console.log('Error. No result from z-wave');
+      resolve(null);
+      return;
+    }
     let changed = false;
     const res = {};
-    result.forEach(({ name, value }) => {
+    result.forEach(({ name, value } = {}) => {
       if (vars[name] !== value) {
         res[name] = value;
         changed = true;
@@ -74,7 +79,7 @@ const toggleLamp = (name, value) => {
     console.log(`Got response: ${res.statusCode}`);
     writingInProgress = false;
   }).on('error', (err) => {
-    console.error(`http error: ${err}`);
+    console.log(`http error: ${err.message}`);
     writingInProgress = false;
   }).end();
 };

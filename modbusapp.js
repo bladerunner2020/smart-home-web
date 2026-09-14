@@ -56,7 +56,7 @@ const connectModbus = () => new Promise((resolve, reject) => {
       promiseAnswered = true;
       reject(err);
     } else {
-      console.error(err);
+      console.log('Modbus error', err.message);
     }
     closeModbus();
   });
@@ -103,7 +103,7 @@ const update = () => {
       })
       .catch((err) => {
         if (err.message !== lastError) {
-          console.error(err);
+          console.log('Modbus error', err.message);
           lastError = err.message;
         }
         closeModbus();
@@ -111,7 +111,7 @@ const update = () => {
     .catch((err) => {
       if (err.message !== lastError) {
         lastError = err.message;
-        console.error(err);
+        console.log('Modbus error', err.message);
       }
       closeModbus();
     });
@@ -129,7 +129,7 @@ const toggleCoil = (name, value) => {
   connectModbus().then(() => modbusClient.writeSingleCoil(swCoil, true))
     .then(() => modbusClient.writeSingleCoil(swCoil, false))
     .catch((err) => {
-      console.error(`Error write coil: ${err.message}`);
+      console.log(`Error write coil: ${err.message}`);
       closeModbus();
     })
     .finally(() => {
@@ -140,7 +140,7 @@ const toggleCoil = (name, value) => {
 const isConnected = () => modbusClient.isConnected();
 
 const reconnect = () => new Promise((resolve) => {
-  closeModbus().catch(console.error).finally(() => {
+  closeModbus().catch((err) => console.log('reconnect error', err.message)).finally(() => {
     setTimeout(resolve, 100);
   });
 });

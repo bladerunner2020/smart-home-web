@@ -82,14 +82,14 @@ app.get('/switch', (req, res) => {
 
   console.log(`Switch. Lamp = ${lamp}`);
   if (Number.isNaN(lamp)) {
-    console.error('... Error lamp ID');
+    console.log('Error. ... Error lamp ID');
     return;
   }
   const name = `var${lamp}`;
   console.log(`...Switching light for ${name}`);
 
   if (valid_vars.indexOf(name) === -1 || !vars[name]) {
-    console.error(`Invalid lamp id: ${name}`);
+    console.log(`Error. Invalid lamp id: ${name}`);
     return;
   }
 
@@ -109,7 +109,7 @@ app.get('/switch', (req, res) => {
     case 'none':
       return;
     default:
-      console.error(`Invalid command: ${req.query.on}`);
+      console.log(`Error. Invalid command: ${req.query.on}`);
       return;
   }
   synchronize(data, SYNC_API);
@@ -186,7 +186,7 @@ if (zwaveEnable) {
 const reconnectModbus = () => {
   setTimeout(() => {
     pollModbus(); // restart polling
-    modbusapp.reconnect().catch(console.error).finally(reconnectModbus);
+    modbusapp.reconnect().catch((err) => console.log('reconnectModbus error', err.message)).finally(reconnectModbus);
   }, 60000);
 };
 reconnectModbus();

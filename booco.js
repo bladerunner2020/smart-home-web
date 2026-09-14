@@ -118,9 +118,9 @@ const updateData = (now) => {
   updateTimer = setTimeout(() => {
     updateTimer = null;
     login(true)
-      .then(() => subscribe().catch(console.error))
-      .then(() => requestData().catch(console.error))
-      .catch(console.error)
+      .then(() => subscribe().catch((err) => console.log('subscribe error', err.message)))
+      .then(() => requestData().catch((err) => console.log('requestData error', err.message)))
+      .catch((err) => console.log('updateData error', err))
       .finally(updateData);
   }, now ? 0 : 180000);
 };
@@ -133,8 +133,8 @@ const toggleBoocoDevice = (name, value) => {
   login()
     .then(() => httpRequest({
       path: `/api/v1/equipment/set/${deviceName}/${channel}`
-    }).catch(console.error))
-    .catch(console.error);
+    }).catch((err) => console.log('toggleBoocoDevice error', err.message)))
+    .catch((err) => console.log('toggleBoocoDevice error', err.message));
 };
 
 const initializeBooco = (sync) => {

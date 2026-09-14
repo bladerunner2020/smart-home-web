@@ -14,7 +14,7 @@ const boocoEnable = config.get('booco.enable', false);
 
 const syncElement = function(name, value, source) {
   if (typeof vars[name] !== 'object') {
-    console.error(new Error(`invalid name: ${name}`));
+    console.log('Invalid name', name);
     return;
   }
 
@@ -51,7 +51,7 @@ const syncElement = function(name, value, source) {
       break;
 
     default:
-      console.error(`Wrong flag: ${source}`);
+      console.log(`Error. Wrong flag: ${source}`);
   }
 };
 
@@ -61,7 +61,7 @@ const synchronize = (data, source) => {
   const keys = Object.keys(data);
   keys.forEach((name) => {
     if (typeof vars[name] === 'undefined') {
-      console.error(new Error(`Invalid request: ${name}`));
+      console.log('Error. Invalid request', name);
     } else if (vars[name].value !== data[name] || source === SYNC_FORCE_ZWAVE) {
       syncElement(name, data[name], source);
     }

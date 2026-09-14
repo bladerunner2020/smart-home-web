@@ -1,8 +1,7 @@
 /* eslint-disable no-console */
-// const hap = require('hap-nodejs');
 const {
   Accessory, Characteristic, CharacteristicEventTypes, Service, Categories, Bridge, HAPStorage, uuid
-} = require('hap-nodejs');
+} = require('@homebridge/hap-nodejs');
 const path = require('path');
 const { vars, SYNC_API } = require('./vars-and-flags');
 const config = require('./save-config');
