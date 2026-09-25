@@ -1,6 +1,6 @@
 {
   "name": "smart-home-web",
-  "version": "2.2.1",
+  "version": "2.4.0",
   "description": "Providing web interface to PLC",
   "main": "app.js",
   "scripts": {

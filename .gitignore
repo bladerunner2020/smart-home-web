@@ -1,5 +1,6 @@
 node_modules
 config/production.json
+config/development.json
 config/local.json
 yarn.error
 persist
