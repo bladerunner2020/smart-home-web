@@ -11,6 +11,7 @@ const enable = config.get('hap.enable', true);
 const useBridge = config.get('hap.useBridge');
 const serviceName = config.get('hap.serviceName', 'hap-dev.booco');
 const serviceMac = config.get('hap.serviceMac', '20:00:77:77:77:00');
+const pincode = config.get('hap.pincode', '111-22-333');
 console.log(`HAP: ${serviceName}, ${serviceMac}`);
 
 const characteristics = {};
@@ -70,26 +71,26 @@ const initializeAppleHomekit = (synchronize) => {
     } else {
       const s = `00${index}`.slice(-2);
       const port = 47129 + index;
-      const pincode = '111-22-333';
       const username = serviceMac.slice(0, -2) + s;
       // once everything is set up, we publish the accessory. Publish should always be the last step!
+      console.log(`Publishing ${name}, port: ${port}, pincode: ${pincode}, ${username}, ${title}`);
       accessory.publish({
         username, // replace last 2 digits with index
         pincode,
         port,
         category: Categories.LIGHTBULB, // value here defines the symbol shown in the pairing screen
-      });
-      console.log(`Publishing ${name}, port: ${port}, pincode: ${pincode}, ${username}, ${title}`);
+      }).catch((err) => console.error(`Failed to publish accessory ${name}: ${err.message}`));
     }
   });
 
   if (bridge) {
+    console.log(`Publishing bridge accessory with username: ${serviceMac}, pincode: ${pincode}, port: 47128`);
     bridge.publish({
       username: serviceMac,
-      pincode: '111-22-333',
+      pincode,
       port: 47128,
       category: Categories.BRIDGE, // value here defines the symbol shown in the pairing screen
-    });
+    }).catch((err) => console.error(`Failed to publish bridge accessory: ${err.message}`));
   }
 
   console.log('Accessory setup finished!');
