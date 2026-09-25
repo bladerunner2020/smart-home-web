@@ -1,9 +1,5 @@
-version: '3.8'
 services:
   smart-home-web:
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: bladerunner2020/smart-home-web
     restart: always
     ports:
@@ -39,9 +35,10 @@ services:
   
     volumes:
       - ./data:/data
+      - ./persist:/usr/src/app/persist
     networks:
       lan:
-        ipv4_address: 192.168.2.75
+        ipv4_address: 192.168.2.200
 
 networks:
   lan:

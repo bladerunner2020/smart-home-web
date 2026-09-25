@@ -1,4 +1,4 @@
-FROM node:12.18.4-alpine
+FROM node:20-alpine
 WORKDIR /usr/src/app
 RUN apk --no-cache add \
   bash \
